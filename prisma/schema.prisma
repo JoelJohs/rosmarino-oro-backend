@@ -15,13 +15,17 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
   name      String
-  phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  role      UserRole  @default(CLIENT)
+  isEmailVerified Boolean @default(false)
+  verificationToken String?
+  refreshToken      String? // JWT refresh token (hasheado)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
   reservations Reservation[]
 }
 
@@ -91,4 +95,10 @@ enum OrderStatus {
   PREPARING
   DELIVERED
   CANCELLED
+}
+
+enum UserRole {
+  SUPERADMIN
+  EMPLOYEE
+  CLIENT
 }
