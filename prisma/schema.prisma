@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  reservations Reservation[]
+}
+
+model Table {
+  id        Int      @id @default(autoincrement())
+  number    Int      @unique
+  capacity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations Reservation[]
+}
+
+model Reservation {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  tableId         Int
+  date            DateTime
+  time            String
+  duration        Int       @default(60)
+  extended        Boolean   @default(false)
+  status          ReservationStatus @default(PENDING)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  table Table @relation(fields: [tableId], references: [id])
+
+  order Order? // Relación opcional: 0..1
+}
+
+model Order {
+  id            Int       @id @default(autoincrement())
+  reservationId Int       @unique
+  items         Json      // [{ menuItemId: 1, quantity: 2, price: 12.5 }]
+  total         Float
+  serviceFee    Float     // 3% si fue pre-orden
+  status        OrderStatus @default(PENDING)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+}
+
+model MenuItem {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  category    String
+  imageUrl    String?
+  available   Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  DELIVERED
+  CANCELLED
+}
