@@ -1,10 +1,41 @@
 /* eslint-disable prettier/prettier */
-import { PrismaClient } from '../generated/prisma';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-    // 1. Mesas
+    // 1. Usuarios admin y empleados
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+
+    await prisma.user.upsert({
+        where: { email: 'admin@rosmarino.com' },
+        update: {},
+        create: {
+            email: 'admin@rosmarino.com',
+            password: hashedPassword,
+            name: 'Administrador',
+            role: 'SUPERADMIN',
+            isEmailVerified: true,
+        },
+    });
+
+    await prisma.user.upsert({
+        where: { email: 'empleado@rosmarino.com' },
+        update: {},
+        create: {
+            email: 'empleado@rosmarino.com',
+            password: hashedPassword,
+            name: 'Empleado',
+            role: 'EMPLOYEE',
+            isEmailVerified: true,
+        },
+    });
+
+    // 2. Mesas
     for (let i = 1; i <= 10; i++) {
         await prisma.table.upsert({
             where: { number: i },
@@ -40,14 +71,12 @@ async function main() {
         { name: 'Carpaccio di Manzo', description: 'Finas lonchas de ternera cruda', price: 12, category: 'Antipasti' },
     ];
 
-    for (const item of menuItems) {
-        await prisma.menuItem.createMany({
-            data: [item],
-            skipDuplicates: true,
-        });
-    }
+    await prisma.menuItem.createMany({
+        data: menuItems,
+        skipDuplicates: true,
+    });
 
-    console.log('✅ Mesas y menú insertados');
+    console.log('✅ Usuarios, mesas y menú insertados');
 }
 
 main()
@@ -56,5 +85,5 @@ main()
         process.exit(1);
     })
     .finally(() => {
-        void prisma.$disconnect();
+        void (prisma.$disconnect as () => Promise<void>)();
     });

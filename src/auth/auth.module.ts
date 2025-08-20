@@ -9,6 +9,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { TokenCleanupService } from './cleanup.service';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { RolesGuard } from './guards/roles.guard';
     JwtRefreshStrategy,
     JwtAuthGuard,
     RolesGuard,
+    PrismaService,
+    TokenCleanupService
   ],
   exports: [AuthService, JwtAuthGuard, RolesGuard],
 })

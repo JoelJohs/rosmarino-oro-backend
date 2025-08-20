@@ -1,4 +1,8 @@
 /* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -74,16 +78,33 @@ export class AuthService {
 
   async updateRefreshToken(userId: number, refreshToken: string) {
     const hashed = await this.hash(refreshToken);
-    await this.prisma.user.update({ where: { id: userId }, data: { refreshToken: hashed } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        refreshToken: hashed,
+        refreshTokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
+      },
+    });
   }
 
   async logout(userId: number) {
-    await this.prisma.user.update({ where: { id: userId }, data: { refreshToken: null } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        refreshToken: null,
+        refreshTokenExpiresAt: null,
+      },
+    });
   }
 
   async refresh(userId: number, refreshToken: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || !user.refreshToken) throw new ForbiddenException('Acceso denegado');
+
+    // Verificar si el refresh token ha expirado
+    if (user.refreshTokenExpiresAt && new Date() > user.refreshTokenExpiresAt) {
+      throw new ForbiddenException('Token de actualización expirado');
+    }
 
     const matches = await this.compare(refreshToken, user.refreshToken);
     if (!matches) throw new ForbiddenException('Acceso denegado');
