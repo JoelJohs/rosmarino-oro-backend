@@ -47,17 +47,17 @@ async function main() {
         });
     }
 
-    // 2. Menú italiano
+    // 3. Menú italiano (algunos con imágenes de ejemplo)
     const menuItems = [
-        { name: 'Spaghetti Carbonara', description: 'Cremosa salsa carbonara con guanciale', price: 12.5, category: 'Pasta' },
+        { name: 'Spaghetti Carbonara', description: 'Cremosa salsa carbonara con guanciale', price: 12.5, category: 'Pasta', imageUrl: '/uploads/spaghetti-carbonara.jpg' },
         { name: 'Tagliatelle al Ragù', description: 'Ragù boloñés tradicional', price: 14, category: 'Pasta' },
-        { name: 'Lasagna alla Bolognese', description: 'Capas de pasta, ragù y bechamel', price: 15, category: 'Pasta' },
+        { name: 'Lasagna alla Bolognese', description: 'Capas de pasta, ragù y bechamel', price: 15, category: 'Pasta', imageUrl: '/uploads/lasagna-alla-bolognese.jpg' },
         { name: 'Risotto ai Funghi', description: 'Arroz cremoso con setas porcini', price: 16, category: 'Risotti' },
-        { name: 'Margherita Pizza', description: 'Tomate, mozzarella y albahaca', price: 10, category: 'Pizza' },
+        { name: 'Margherita Pizza', description: 'Tomate, mozzarella y albahaca', price: 10, category: 'Pizza', imageUrl: '/uploads/margherita-pizza.jpg' },
         { name: 'Calzone', description: 'Pizza rellena de ricotta y espinaca', price: 11, category: 'Pizza' },
         { name: 'Bruschetta Classica', description: 'Pan tostado con tomate y albahaca', price: 6, category: 'Antipasti' },
         { name: 'Arancini di Riso', description: 'Bolas de risotto fritas rellenas', price: 7, category: 'Antipasti' },
-        { name: 'Tiramisu', description: 'Postre clásico con café y mascarpone', price: 6, category: 'Dolci' },
+        { name: 'Tiramisu', description: 'Postre clásico con café y mascarpone', price: 6, category: 'Dolci', imageUrl: '/uploads/tiramisu.jpg' },
         { name: 'Panna Cotta', description: 'Crema de vainilla con salsa de frutos rojos', price: 5.5, category: 'Dolci' },
         { name: 'Gnocchi al Pesto', description: 'Ñoquis con salsa pesto genovese', price: 13, category: 'Pasta' },
         { name: 'Fettuccine Alfredo', description: 'Pasta con crema de parmesano', price: 13.5, category: 'Pasta' },
