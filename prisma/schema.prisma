@@ -33,6 +33,7 @@ model Table {
   id        Int      @id @default(autoincrement())
   number    Int      @unique
   capacity  Int
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -78,6 +79,7 @@ model MenuItem {
   category    String
   imageUrl    String?
   available   Boolean @default(true)
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
