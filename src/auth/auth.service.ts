@@ -26,7 +26,7 @@ export class AuthService {
     return bcrypt.compare(data, hash);
   }
 
-  async register(dto: { email: string; name: string; password: string }) {
+  async register(dto: { email: string; firstName: string; middleName?: string; lastName: string; password: string }) {
     const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (exists) throw new ForbiddenException('Email ya registrado');
 
@@ -34,7 +34,10 @@ export class AuthService {
     const token = uuid();
     await this.prisma.user.create({
       data: {
-        ...dto,
+        email: dto.email,
+        firstName: capitalize(dto.firstName),
+        middleName: dto.middleName ? capitalize(dto.middleName) : undefined,
+        lastName: capitalize(dto.lastName),
         password: hashed,
         verificationToken: token,
       },
@@ -114,14 +117,17 @@ export class AuthService {
     return tokens;
   }
 
-  async createEmployee(dto: { email: string; name: string; password: string }) {
+  async createEmployee(dto: { email: string; firstName: string; middleName?: string; lastName: string; password: string }) {
     const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (exists) throw new ForbiddenException('Email ya registrado');
 
     const hashed = await this.hash(dto.password);
     const user = await this.prisma.user.create({
       data: {
-        ...dto,
+        email: dto.email,
+        firstName: capitalize(dto.firstName),
+        middleName: dto.middleName ? capitalize(dto.middleName) : undefined,
+        lastName: capitalize(dto.lastName),
         password: hashed,
         role: 'EMPLOYEE',
         isEmailVerified: true,
@@ -129,4 +135,10 @@ export class AuthService {
     });
     return { id: user.id, email: user.email, role: user.role };
   }
+
+}
+
+function capitalize(str: string) {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }

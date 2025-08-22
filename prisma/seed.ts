@@ -17,7 +17,8 @@ async function main() {
         create: {
             email: 'admin@rosmarino.com',
             password: hashedPassword,
-            name: 'Administrador',
+            firstName: 'Administrador',
+            lastName: 'Rosmarino',
             role: 'SUPERADMIN',
             isEmailVerified: true,
         },
@@ -29,7 +30,8 @@ async function main() {
         create: {
             email: 'empleado@rosmarino.com',
             password: hashedPassword,
-            name: 'Empleado',
+            firstName: 'Empleado',
+            lastName: 'Rosmarino',
             role: 'EMPLOYEE',
             isEmailVerified: true,
         },
@@ -42,7 +44,8 @@ async function main() {
         create: {
             email: 'cliente@test.com',
             password: hashedPassword,
-            name: 'Cliente Test',
+            firstName: 'Cliente',
+            lastName: 'Test',
             role: 'CLIENT',
             isEmailVerified: true,
         },
