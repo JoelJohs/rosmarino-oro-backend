@@ -8,6 +8,20 @@
   Backend API desarrollado con NestJS, TypeScript y Prisma para el restaurante Rosmarino & Oro
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/NestJS-11.0.1-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS">
+  <img src="https://img.shields.io/badge/TypeScript-5.7.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Prisma-6.14.0-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma">
+  <img src="https://img.shields.io/badge/PostgreSQL-Database-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT">
+  <img src="https://img.shields.io/badge/Bcrypt-6.0.0-8B5A2B?style=for-the-badge&logo=npm&logoColor=white" alt="Bcrypt">
+  <img src="https://img.shields.io/badge/Nodemailer-7.0.5-0F9D58?style=for-the-badge&logo=mail.ru&logoColor=white" alt="Nodemailer">
+  <img src="https://img.shields.io/badge/Sharp-0.34.3-99CC00?style=for-the-badge&logo=sharp&logoColor=white" alt="Sharp">
+</p>
+
 ## 📋 Descripción
 
 API REST completa para la gestión de un restaurante que incluye:
