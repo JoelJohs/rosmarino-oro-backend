@@ -1,31 +1,23 @@
 /* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, UseInterceptors, UploadedFile, NotFoundException, BadRequestException } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { CreateMenuItemDto } from './dto/create-menu.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
+// ...existing code...
 import { Roles } from '../auth/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import sharp from 'sharp';
-import { promises as fs } from 'fs';
+import { unlink } from 'fs/promises';
+import cloudinary from 'src/cloudinary/cloudinary.provider';
 
 @Controller('menu')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class MenuController {
   constructor(private readonly menuService: MenuService) { }
 
   @Get()
-  @Roles('SUPERADMIN', 'EMPLOYEE', 'CLIENT')
   findAll() {
     return this.menuService.findAll();
   }
 
   @Get(':id')
-  @Roles('SUPERADMIN', 'EMPLOYEE', 'CLIENT')
   findOne(@Param('id') id: string) {
     return this.menuService.findOne(+id);
   }
@@ -38,66 +30,49 @@ export class MenuController {
 
   @Post('with-image')
   @Roles('SUPERADMIN', 'EMPLOYEE')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (_, file, cb) => {
-          // Nombre temporal, lo cambiaremos después
-          const tempName = `temp_${Date.now()}${extname(file.originalname)}`;
-          cb(null, tempName);
-        },
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('image'))
   async createWithImage(@Body() dto: CreateMenuItemDto, @UploadedFile() file: Express.Multer.File) {
     // 1. Crear el plato primero
     const menuItem = await this.menuService.create(dto);
 
     if (file) {
-      // 2. Generar nombre basado en el nombre del plato
-      const slug = dto.name
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '') // Remover caracteres especiales
-        .replace(/\s+/g, '-') // Reemplazar espacios con guiones
-        .trim();
-
-      const finalFileName = `${slug}.jpg`;
-      const tempPath = file.path;
-      const finalPath = `./uploads/${finalFileName}`;
-
       try {
-        // 3. Convertir a JPG y redimensionar usando Sharp
-        await sharp(tempPath)
-          .resize(800, 600, { fit: 'cover' })
-          .jpeg({ quality: 85 })
-          .toFile(finalPath);
+        // 2. Generar nombre basado en el nombre del plato
+        const publicId = dto.name
+          .toLowerCase()
+          .replace(/[^a-z0-9\s]/g, '')
+          .replace(/\s+/g, '-')
+          .trim();
 
-        // 4. Eliminar archivo temporal
-        await fs.unlink(tempPath);
+        // 3. Subir a Cloudinary con optimización automática
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: 'menu',
+          public_id: publicId,
+          overwrite: true,
+          resource_type: 'image',
+          // Cloudinary optimiza automáticamente formato y calidad
+          fetch_format: 'auto',
+          quality: 'auto'
+        });
 
-        // 5. Actualizar el plato con la URL de la imagen
-        const imageUrl = `/uploads/${finalFileName}`;
+        // 4. Limpiar archivo temporal
+        await unlink(file.path);
+
+        // 5. Actualizar el plato con la URL de Cloudinary
+        const imageUrl = result.secure_url; // URL completa de Cloudinary
         return this.menuService.update(menuItem.id, { imageUrl });
+
       } catch (error) {
-        console.error('Error procesando imagen con Sharp:', error);
+        console.error('Error subiendo a Cloudinary:', error);
 
-        // Fallback: solo renombrar sin procesar
+        // Limpiar archivo temporal en caso de error
         try {
-          await fs.rename(tempPath, finalPath);
-          const imageUrl = `/uploads/${finalFileName}`;
-          return this.menuService.update(menuItem.id, { imageUrl });
-        } catch (fallbackError) {
-          console.error('Error en fallback:', fallbackError);
-
-          // Si todo falla, limpiar el archivo temporal
-          try {
-            await fs.unlink(tempPath);
-          } catch (unlinkError) {
-            console.error('Error al eliminar archivo temporal:', unlinkError);
-          }
-          throw fallbackError;
+          await unlink(file.path);
+        } catch (unlinkError) {
+          console.error('Error al eliminar archivo temporal:', unlinkError);
         }
+
+        throw new BadRequestException('Error al procesar la imagen');
       }
     }
 
@@ -118,78 +93,75 @@ export class MenuController {
 
   @Post('upload/:id')
   @Roles('SUPERADMIN', 'EMPLOYEE')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (_, file, cb) => {
-          // Nombre temporal, lo cambiaremos después
-          const tempName = `temp_${Date.now()}${extname(file.originalname)}`;
-          cb(null, tempName);
-        },
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('image', { dest: './uploads' }))
   async uploadImage(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
-    // 1. Obtener el plato para generar el nombre correcto
-    const menuItem = await this.menuService.findOne(+id);
-    if (!menuItem) {
-      throw new Error('Plato no encontrado');
+    if (!file) {
+      throw new BadRequestException('No se recibió ningún archivo');
     }
 
-    // 2. Generar nombre basado en el nombre del plato
-    const slug = menuItem.name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '') // Remover caracteres especiales
-      .replace(/\s+/g, '-') // Reemplazar espacios con guiones
-      .trim();
+    console.log('Archivo recibido:', file);
 
-    const finalFileName = `${slug}.jpg`;
-    const tempPath = file.path;
-    const finalPath = `./uploads/${finalFileName}`;
+    // 1. Obtener el plato
+    const menuItem = await this.menuService.findOne(+id);
+    if (!menuItem) {
+      throw new NotFoundException('Plato no encontrado');
+    }
+
+    if (!file) {
+      throw new BadRequestException('No se proporcionó ninguna imagen');
+    }
 
     try {
-      // 3. Si ya existe una imagen anterior, eliminarla
-      if (menuItem.imageUrl) {
-        const oldImagePath = `./uploads/${menuItem.imageUrl.split('/').pop()}`;
+      // 2. Generar nombre basado en el nombre del plato
+      const publicId = menuItem.name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '-')
+        .trim();
+
+      // 3. Si existe imagen anterior en Cloudinary, eliminarla
+      if (menuItem.imageUrl && menuItem.imageUrl.includes('cloudinary.com')) {
         try {
-          await fs.unlink(oldImagePath);
+          // Extraer public_id de la URL
+          const urlParts = menuItem.imageUrl.split('/');
+          const folder = urlParts[urlParts.length - 2];
+          const filename = urlParts[urlParts.length - 1].split('.')[0];
+          const publicIdToDelete = `${folder}/${filename}`;
+
+          await cloudinary.uploader.destroy(publicIdToDelete);
         } catch (error) {
-          console.log('No se pudo eliminar imagen anterior:', error.message);
+          console.log('Could not delete previous image:', typeof error === 'object' && error !== null && 'message' in error ? (error as { message?: string }).message : error);
         }
       }
 
-      // 4. Convertir a JPG y redimensionar usando Sharp
-      await sharp(tempPath)
-        .resize(800, 600, { fit: 'cover' })
-        .jpeg({ quality: 85 })
-        .toFile(finalPath);
+      // 4. Subir nueva imagen a Cloudinary
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder: 'menu',
+        public_id: publicId,
+        overwrite: true,
+        resource_type: 'image',
+        fetch_format: 'auto',
+        quality: 'auto'
+      });
 
-      // 5. Eliminar archivo temporal
-      await fs.unlink(tempPath);
+      // 5. Limpiar archivo temporal
+      await unlink(file.path);
 
-      // 6. Actualizar el plato con la nueva URL
-      const imageUrl = `/uploads/${finalFileName}`;
+      // 6. Actualizar con URL completa de Cloudinary
+      const imageUrl = result.secure_url;
       return this.menuService.update(+id, { imageUrl });
+
     } catch (error) {
-      console.error('Error procesando imagen con Sharp:', error);
+      console.error('Error subiendo a Cloudinary:', error);
 
-      // Fallback: solo renombrar sin procesar
+      // Limpiar archivo temporal
       try {
-        await fs.rename(tempPath, finalPath);
-        const imageUrl = `/uploads/${finalFileName}`;
-        return this.menuService.update(+id, { imageUrl });
-      } catch (fallbackError) {
-        console.error('Error en fallback:', fallbackError);
-
-        // Si todo falla, limpiar el archivo temporal
-        try {
-          await fs.unlink(tempPath);
-        } catch (unlinkError) {
-          console.error('Error al eliminar archivo temporal:', unlinkError);
-        }
-        throw fallbackError;
+        await unlink(file.path);
+      } catch (unlinkError) {
+        console.error('Error al eliminar archivo temporal:', unlinkError);
       }
+
+      throw new BadRequestException('Error al procesar la imagen');
     }
   }
 }

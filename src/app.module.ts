@@ -9,9 +9,13 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TablesModule } from './tables/tables.module';
 import { MenuModule } from './menu/menu.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     ScheduleModule.forRoot(),
     PrismaModule,
     UsersModule,
