@@ -1,8 +1,5 @@
 /* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -59,7 +56,18 @@ export class AuthService {
   }
 
   async login(dto: { email: string; password: string }) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } }) as {
+      id: number;
+      email: string;
+      firstName: string;
+      middleName?: string;
+      lastName: string;
+      password: string;
+      role: string;
+      isEmailVerified: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    };
     if (!user || !user.isEmailVerified) throw new ForbiddenException('Credenciales inválidas');
 
     const valid = await this.compare(dto.password, user.password);
@@ -67,7 +75,20 @@ export class AuthService {
 
     const tokens = await this.getTokens(user.id, user.email, user.role);
     await this.updateRefreshToken(user.id, tokens.refreshToken);
-    return tokens;
+    return {
+      accessToken: tokens.accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      }
+    };
   }
 
   async getTokens(userId: number, email: string, role: string) {
@@ -135,9 +156,10 @@ export class AuthService {
     });
     return { id: user.id, email: user.email, role: user.role };
   }
-
 }
 
+
+// Capitaliza la primera letra y pone el resto en minúscula
 function capitalize(str: string) {
   if (!str) return str;
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();

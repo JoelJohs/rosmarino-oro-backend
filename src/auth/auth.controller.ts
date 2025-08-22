@@ -12,7 +12,7 @@ export class AuthController {
   constructor(private auth: AuthService) { }
 
   @Post('register')
-  register(@Body() dto: { email: string; firstName: string; middleName?: string; lastName: string; password: string }) {
+  register(@Body() dto: { email: string; firstName: string; lastName: string; middleName?: string; password: string }) {
     return this.auth.register(dto);
   }
 
@@ -29,7 +29,7 @@ export class AuthController {
   @Post('employee')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPERADMIN')
-  createEmployee(@Body() dto: { email: string; firstName: string; middleName?: string; lastName: string; password: string }) {
+  createEmployee(@Body() dto: { email: string; firstName: string; lastName: string; middleName?: string; password: string }) {
     return this.auth.createEmployee(dto);
   }
 
