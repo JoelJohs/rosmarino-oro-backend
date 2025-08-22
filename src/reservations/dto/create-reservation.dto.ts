@@ -1,29 +1,39 @@
 /* eslint-disable prettier/prettier */
+import {
+    IsInt,
+    IsDateString,
+    IsString,
+    IsOptional,
+    IsArray,
+    ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
+export class OrderItemDto {
+    @IsInt()
+    menuItemId: number;
 
-import { IsInt, IsDateString, IsString, IsOptional, IsBoolean } from 'class-validator';
+    @IsInt()
+    quantity: number;
+}
 
 export class CreateReservationDto {
-    @IsInt()
-    userId: number;
-
     @IsInt()
     tableId: number;
 
     @IsDateString()
-    date: string; // ISO string
+    date: string; // YYYY-MM-DD format
 
     @IsString()
-    time: string; // "19:00"
+    time: string; // HH:mm
 
     @IsOptional()
     @IsInt()
     duration?: number = 60;
 
     @IsOptional()
-    preOrder?: any[];
-
-    @IsOptional()
-    @IsBoolean()
-    extended?: boolean = false;
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => OrderItemDto)
+    preOrder?: OrderItemDto[];
 }

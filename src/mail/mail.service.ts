@@ -11,12 +11,16 @@ export class MailService {
         this.transporter = nodemailer.createTransport({
             host: process.env.MAIL_HOST || 'smtp.ethereal.email',
             port: parseInt(process.env.MAIL_PORT || '587'),
+            secure: false, // true for 465, false for other ports
             auth: {
                 user: process.env.MAIL_USER,
                 pass: process.env.MAIL_PASSWORD,
             },
+            tls: {
+                rejectUnauthorized: false, // Ignora certificados autofirmados
+            },
         });
-    }   
+    }
 
     async sendVerification(email: string, token: string): Promise<void> {
         const url = `${process.env.APP_URL || 'http://localhost:3000'}/auth/verify-email/${token}`;

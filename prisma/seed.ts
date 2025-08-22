@@ -35,6 +35,19 @@ async function main() {
         },
     });
 
+    // Usuario cliente para pruebas
+    await prisma.user.upsert({
+        where: { email: 'cliente@test.com' },
+        update: {},
+        create: {
+            email: 'cliente@test.com',
+            password: hashedPassword,
+            name: 'Cliente Test',
+            role: 'CLIENT',
+            isEmailVerified: true,
+        },
+    });
+
     // 2. Mesas
     for (let i = 1; i <= 10; i++) {
         await prisma.table.upsert({
